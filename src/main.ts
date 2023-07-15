@@ -27,14 +27,21 @@ class Batterx extends utils.Adapter {
 	 */
 	private async onReady(): Promise<void> {
 		// Initialize your adapter here
+		const { name, batterxHost } = this.config;
+		console.log('NAME', this.config);
+		await this.setObjectNotExistsAsync(name, {
+			type: 'folder',
+			common: { name: 'name of the batterX device' },
+			native: {},
+		});
 
 		// Reset the connection indicator during startup
 		this.setState('info.connection', false, true);
 
 		// The adapters config (in the instance object everything under the attribute "native") is accessible via
 		// this.config:
-		this.log.info('config option1: ' + this.config.option1);
-		this.log.info('config option2: ' + this.config.option2);
+		this.log.info('config name: ' + this.config.name);
+		this.log.info('config batterxHost: ' + this.config.batterxHost);
 
 		/*
 		For every state in the system there has to be also an object of type state

@@ -1,5 +1,5 @@
 {
 	"batterx adapter settings": "Ustawienia adaptera dla batterx",
-	"option1": "opcja 1",
-	"option2": "Opcja 2"
+	"name": "Name",
+	"batterxHost": "BatterX host"
 }

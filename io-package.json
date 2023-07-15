@@ -44,8 +44,16 @@
 			"uk": "Підключіть систему зберігання енергії batterX",
 			"zh-cn": "连接您的batterX电力存储系统"
 		},
-		"authors": ["cyclist82 <leiflampater@gmail.com>"],
-		"keywords": ["batterx", "power", "storage", "photo", "voltaik"],
+		"authors": [
+			"cyclist82 <leiflampater@gmail.com>"
+		],
+		"keywords": [
+			"batterx",
+			"power",
+			"storage",
+			"photo",
+			"voltaik"
+		],
 		"license": "MIT",
 		"platform": "Javascript/Node.js",
 		"main": "build/main.js",
@@ -74,8 +82,8 @@
 		]
 	},
 	"native": {
-		"option1": true,
-		"option2": "42"
+		"name": "",
+		"batterxHost": ""
 	},
 	"objects": [],
 	"instanceObjects": [

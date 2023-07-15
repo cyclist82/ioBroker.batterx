@@ -2,15 +2,25 @@
 	"i18n": true,
 	"type": "panel",
 	"items": {
-		"option1": {
-			"type": "checkbox",
-			"label": "option1",
-			"newLine": true
-		},
-		"option2": {
+		"name": {
+			"xs": 12,
+			"md": 6,
 			"type": "text",
-			"label": "option2",
-			"newLine": true
+			"label": "Name",
+			"newLine": true,
+			"validator": "!!data.batterxHost",
+			"validatorNoSaveOnError": true,
+			"placeholder": "Name of batterX device"
+		},
+		"batterxHost": {
+			"xs": 12,
+			"md": 6,
+			"type": "text",
+			"label": "BatterX host",
+			"newLine": true,
+			"validator": "!!data.batterxHost",
+			"validatorNoSaveOnError": true,
+			"placeholder": "127.0.0.1"
 		}
 	}
 }

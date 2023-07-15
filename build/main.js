@@ -29,9 +29,16 @@ class Batterx extends utils.Adapter {
     this.on("unload", this.onUnload.bind(this));
   }
   async onReady() {
+    const { name, batterxHost } = this.config;
+    console.log("NAME", this.config);
+    await this.setObjectNotExistsAsync(name, {
+      type: "folder",
+      common: { name: "name of the batterX device" },
+      native: {}
+    });
     this.setState("info.connection", false, true);
-    this.log.info("config option1: " + this.config.option1);
-    this.log.info("config option2: " + this.config.option2);
+    this.log.info("config name: " + this.config.name);
+    this.log.info("config batterxHost: " + this.config.batterxHost);
     await this.setObjectNotExistsAsync("testVariable", {
       type: "state",
       common: {
