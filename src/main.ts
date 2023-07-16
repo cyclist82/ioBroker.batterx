@@ -5,7 +5,7 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
-import { BatterXService, getStatesMap } from './lib/batterx.service';
+import { BatterXService, BatterXState, getStatesMap } from './lib/batterx.service';
 
 // Load your modules here, e.g.:
 // import * as fs from "fs";
@@ -28,6 +28,7 @@ class Batterx extends utils.Adapter {
 	 * Is called when databases are connected and adapter received configuration.
 	 */
 	private async onReady(): Promise<void> {
+		console.log('ON READY');
 		// Initialize your adapter here
 		const { name, batterxHost } = this.config;
 		if (!name || !batterxHost) {
@@ -36,56 +37,11 @@ class Batterx extends utils.Adapter {
 		// Reset the connection indicator during startup
 		this.setState('info.connection', false, true);
 
-		await this.ensureStatesExist(name);
 		const batterXService = new BatterXService(batterxHost);
-		this.updateCurrentStates(name, batterXService);
+		const current = await batterXService.getCurrent();
+		await this.ensureStatesExist(name, current);
 
-		/*
-		For every state in the system there has to be also an object of type state
-		Here a simple template for a boolean variable named "testVariable"
-		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-		*/
-		this.fetchInterval = setInterval(async () => this.updateCurrentStates(name, batterXService), 10000);
-
-		await this.setObjectNotExistsAsync('testVariable', {
-			type: 'state',
-			common: {
-				name: 'testVariable',
-				type: 'boolean',
-				role: 'indicator',
-				read: true,
-				write: true,
-			},
-			native: {},
-		});
-
-		// In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-		this.subscribeStates('testVariable');
-		// You can also add a subscription for multiple states. The following line watches all states starting with "lights."
-		// this.subscribeStates('lights.*');
-		// Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
-		// this.subscribeStates('*');
-
-		/*
-			setState examples
-			you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
-		*/
-		// the variable testVariable is set to true as command (ack=false)
-		await this.setStateAsync('testVariable', true);
-
-		// same thing, but the value is flagged "ack"
-		// ack should be always set to true if the value is received from or acknowledged from the target system
-		await this.setStateAsync('testVariable', { val: true, ack: true });
-
-		// same thing, but the state is deleted after 30s (getState will return null afterwards)
-		await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
-
-		// examples for the checkPassword/checkGroup functions
-		let result = await this.checkPasswordAsync('admin', 'iobroker');
-		this.log.info('check user admin pw iobroker: ' + result);
-
-		result = await this.checkGroupAsync('admin', 'admin');
-		this.log.info('check group user admin group admin: ' + result);
+		this.fetchInterval = setInterval(() => this.updateCurrentStates(name, batterXService), 10000);
 	}
 
 	/**
@@ -152,16 +108,20 @@ class Batterx extends utils.Adapter {
 	// 	}
 	// }
 
-	private async ensureStatesExist(instanceName: string): Promise<void> {
+	private async ensureStatesExist(instanceName: string, current: BatterXState): Promise<void> {
 		await this.setObjectNotExistsAsync(instanceName, {
 			type: 'folder',
 			common: { name: 'name of the batterX device' },
 			native: {},
 		});
-		await Object.entries(getStatesMap()).forEach(async ([collection, configs]) => {
-			configs.forEach(
-				async ({ id, name, unit }) =>
-					await this.setObjectNotExistsAsync(`${instanceName}.${collection}.${id}`, {
+		Object.entries(getStatesMap()).forEach(async ([collection, configs]) => {
+			configs.forEach(async ({ id, name, unit, type, entity }) => {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				const val = current?.[type]?.[entity];
+				if (val !== undefined) {
+					const path = `${instanceName}.${collection}.${id}`;
+					await this.setObjectNotExistsAsync(path, {
 						type: 'state',
 						common: {
 							name,
@@ -172,8 +132,10 @@ class Batterx extends utils.Adapter {
 							unit,
 						},
 						native: {},
-					}),
-			);
+					});
+					await this.setState(path, { val, ack: true });
+				}
+			});
 		});
 	}
 

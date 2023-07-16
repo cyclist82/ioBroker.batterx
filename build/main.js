@@ -31,34 +31,16 @@ class Batterx extends utils.Adapter {
     this.on("unload", this.onUnload.bind(this));
   }
   async onReady() {
+    console.log("ON READY");
     const { name, batterxHost } = this.config;
     if (!name || !batterxHost) {
       return;
     }
     this.setState("info.connection", false, true);
-    await this.ensureStatesExist(name);
     const batterXService = new import_batterx.BatterXService(batterxHost);
-    this.updateCurrentStates(name, batterXService);
-    this.fetchInterval = setInterval(async () => this.updateCurrentStates(name, batterXService), 1e4);
-    await this.setObjectNotExistsAsync("testVariable", {
-      type: "state",
-      common: {
-        name: "testVariable",
-        type: "boolean",
-        role: "indicator",
-        read: true,
-        write: true
-      },
-      native: {}
-    });
-    this.subscribeStates("testVariable");
-    await this.setStateAsync("testVariable", true);
-    await this.setStateAsync("testVariable", { val: true, ack: true });
-    await this.setStateAsync("testVariable", { val: true, ack: true, expire: 30 });
-    let result = await this.checkPasswordAsync("admin", "iobroker");
-    this.log.info("check user admin pw iobroker: " + result);
-    result = await this.checkGroupAsync("admin", "admin");
-    this.log.info("check group user admin group admin: " + result);
+    const current = await batterXService.getCurrent();
+    await this.ensureStatesExist(name, current);
+    this.fetchInterval = setInterval(() => this.updateCurrentStates(name, batterXService), 1e4);
   }
   onUnload(callback) {
     try {
@@ -77,27 +59,33 @@ class Batterx extends utils.Adapter {
       this.log.info(`state ${id} deleted`);
     }
   }
-  async ensureStatesExist(instanceName) {
+  async ensureStatesExist(instanceName, current) {
     await this.setObjectNotExistsAsync(instanceName, {
       type: "folder",
       common: { name: "name of the batterX device" },
       native: {}
     });
-    await Object.entries((0, import_batterx.getStatesMap)()).forEach(async ([collection, configs]) => {
-      configs.forEach(
-        async ({ id, name, unit }) => await this.setObjectNotExistsAsync(`${instanceName}.${collection}.${id}`, {
-          type: "state",
-          common: {
-            name,
-            type: "number",
-            role: "indicator",
-            read: true,
-            write: false,
-            unit
-          },
-          native: {}
-        })
-      );
+    Object.entries((0, import_batterx.getStatesMap)()).forEach(async ([collection, configs]) => {
+      configs.forEach(async ({ id, name, unit, type, entity }) => {
+        var _a;
+        const val = (_a = current == null ? void 0 : current[type]) == null ? void 0 : _a[entity];
+        if (val !== void 0) {
+          const path = `${instanceName}.${collection}.${id}`;
+          await this.setObjectNotExistsAsync(path, {
+            type: "state",
+            common: {
+              name,
+              type: "number",
+              role: "indicator",
+              read: true,
+              write: false,
+              unit
+            },
+            native: {}
+          });
+          await this.setState(path, { val, ack: true });
+        }
+      });
     });
   }
   async updateCurrentStates(instanceName, batterXService) {
