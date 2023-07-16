@@ -18,7 +18,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var utils = __toESM(require("@iobroker/adapter-core"));
+var import_batterx = require("./lib/batterx.service");
 class Batterx extends utils.Adapter {
+  fetchInterval;
   constructor(options = {}) {
     super({
       ...options,
@@ -30,15 +32,14 @@ class Batterx extends utils.Adapter {
   }
   async onReady() {
     const { name, batterxHost } = this.config;
-    console.log("NAME", this.config);
-    await this.setObjectNotExistsAsync(name, {
-      type: "folder",
-      common: { name: "name of the batterX device" },
-      native: {}
-    });
+    if (!name || !batterxHost) {
+      return;
+    }
     this.setState("info.connection", false, true);
-    this.log.info("config name: " + this.config.name);
-    this.log.info("config batterxHost: " + this.config.batterxHost);
+    await this.ensureStatesExist(name);
+    const batterXService = new import_batterx.BatterXService(batterxHost);
+    this.updateCurrentStates(name, batterXService);
+    this.fetchInterval = setInterval(async () => this.updateCurrentStates(name, batterXService), 1e4);
     await this.setObjectNotExistsAsync("testVariable", {
       type: "state",
       common: {
@@ -61,6 +62,9 @@ class Batterx extends utils.Adapter {
   }
   onUnload(callback) {
     try {
+      if (this.fetchInterval) {
+        clearInterval(this.fetchInterval);
+      }
       callback();
     } catch (e) {
       callback();
@@ -72,6 +76,44 @@ class Batterx extends utils.Adapter {
     } else {
       this.log.info(`state ${id} deleted`);
     }
+  }
+  async ensureStatesExist(instanceName) {
+    await this.setObjectNotExistsAsync(instanceName, {
+      type: "folder",
+      common: { name: "name of the batterX device" },
+      native: {}
+    });
+    await Object.entries((0, import_batterx.getStatesMap)()).forEach(async ([collection, configs]) => {
+      configs.forEach(
+        async ({ id, name, unit }) => await this.setObjectNotExistsAsync(`${instanceName}.${collection}.${id}`, {
+          type: "state",
+          common: {
+            name,
+            type: "number",
+            role: "indicator",
+            read: true,
+            write: false,
+            unit
+          },
+          native: {}
+        })
+      );
+    });
+  }
+  async updateCurrentStates(instanceName, batterXService) {
+    const current = await batterXService.getCurrent();
+    Object.entries((0, import_batterx.getStatesMap)()).forEach(([collection, configs]) => {
+      configs.forEach((config) => {
+        var _a;
+        const value = (_a = current == null ? void 0 : current[config.type]) == null ? void 0 : _a[config.entity];
+        if (value) {
+          const val = config.unit === "V" ? value / 100 : value;
+          this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
+        } else {
+          this.log.debug(`No value for ${config.name}`);
+        }
+      });
+    });
   }
 }
 if (require.main !== module) {

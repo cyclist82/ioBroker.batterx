@@ -5,11 +5,13 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
+import { BatterXService, getStatesMap } from './lib/batterx.service';
 
 // Load your modules here, e.g.:
 // import * as fs from "fs";
 
 class Batterx extends utils.Adapter {
+	private fetchInterval: NodeJS.Timer | undefined;
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
 			...options,
@@ -28,26 +30,23 @@ class Batterx extends utils.Adapter {
 	private async onReady(): Promise<void> {
 		// Initialize your adapter here
 		const { name, batterxHost } = this.config;
-		console.log('NAME', this.config);
-		await this.setObjectNotExistsAsync(name, {
-			type: 'folder',
-			common: { name: 'name of the batterX device' },
-			native: {},
-		});
-
+		if (!name || !batterxHost) {
+			return;
+		}
 		// Reset the connection indicator during startup
 		this.setState('info.connection', false, true);
 
-		// The adapters config (in the instance object everything under the attribute "native") is accessible via
-		// this.config:
-		this.log.info('config name: ' + this.config.name);
-		this.log.info('config batterxHost: ' + this.config.batterxHost);
+		await this.ensureStatesExist(name);
+		const batterXService = new BatterXService(batterxHost);
+		this.updateCurrentStates(name, batterXService);
 
 		/*
 		For every state in the system there has to be also an object of type state
 		Here a simple template for a boolean variable named "testVariable"
 		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
 		*/
+		this.fetchInterval = setInterval(async () => this.updateCurrentStates(name, batterXService), 10000);
+
 		await this.setObjectNotExistsAsync('testVariable', {
 			type: 'state',
 			common: {
@@ -99,7 +98,9 @@ class Batterx extends utils.Adapter {
 			// clearTimeout(timeout2);
 			// ...
 			// clearInterval(interval1);
-
+			if (this.fetchInterval) {
+				clearInterval(this.fetchInterval);
+			}
 			callback();
 		} catch (e) {
 			callback();
@@ -150,6 +151,49 @@ class Batterx extends utils.Adapter {
 	// 		}
 	// 	}
 	// }
+
+	private async ensureStatesExist(instanceName: string): Promise<void> {
+		await this.setObjectNotExistsAsync(instanceName, {
+			type: 'folder',
+			common: { name: 'name of the batterX device' },
+			native: {},
+		});
+		await Object.entries(getStatesMap()).forEach(async ([collection, configs]) => {
+			configs.forEach(
+				async ({ id, name, unit }) =>
+					await this.setObjectNotExistsAsync(`${instanceName}.${collection}.${id}`, {
+						type: 'state',
+						common: {
+							name,
+							type: 'number',
+							role: 'indicator',
+							read: true,
+							write: false,
+							unit,
+						},
+						native: {},
+					}),
+			);
+		});
+	}
+
+	private async updateCurrentStates(instanceName: string, batterXService: BatterXService): Promise<void> {
+		const current = await batterXService.getCurrent();
+		Object.entries(getStatesMap()).forEach(([collection, configs]) => {
+			configs.forEach((config) => {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				const value = current?.[config.type]?.[config.entity];
+				if (value) {
+					// all voltages are send with 2 digits attached
+					const val = config.unit === 'V' ? value / 100 : value;
+					this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
+				} else {
+					this.log.debug(`No value for ${config.name}`);
+				}
+			});
+		});
+	}
 }
 
 if (require.main !== module) {
