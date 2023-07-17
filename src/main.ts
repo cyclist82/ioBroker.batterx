@@ -9,6 +9,7 @@ import {
 	BatterXService,
 	BatterXState,
 	COMMANDS,
+	COMMAND_STATES,
 	Command,
 	CommandType,
 	commandOptions,
@@ -121,7 +122,7 @@ class Batterx extends utils.Adapter {
 			native: {},
 		});
 		Object.entries(getStatesMap()).forEach(async ([collection, configs]) => {
-			configs.forEach(async ({ id, name, unit, type, entity }) => {
+			configs.forEach(async ({ id, name, unit, type, entity, configType }) => {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				const val = current?.[type]?.[entity];
@@ -132,10 +133,11 @@ class Batterx extends utils.Adapter {
 						common: {
 							name,
 							type: 'number',
-							role: 'indicator',
+							role: 'state',
 							read: true,
 							write: false,
 							unit,
+							...(configType ? { states: COMMAND_STATES } : {}),
 						},
 						native: {},
 					});

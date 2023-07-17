@@ -20,12 +20,44 @@ var batterx_service_exports = {};
 __export(batterx_service_exports, {
   BatterXService: () => BatterXService,
   COMMANDS: () => COMMANDS,
+  COMMAND_STATES: () => COMMAND_STATES,
   commandOptions: () => commandOptions,
   getStatesMap: () => getStatesMap
 });
 module.exports = __toCommonJS(batterx_service_exports);
 var import_axios = require("axios");
 const collections = ["upsInput"];
+const INVERTER_COMMANDS_TYPE = 20738;
+const INVERTER_COMMANDS_ENTITY = 0;
+const commandOptions = {
+  gridInjection: {
+    name: "Grid Injection",
+    text1: 1
+  },
+  batteryCharging: {
+    name: "Battery Charging",
+    text1: 2
+  },
+  batteryChargingAC: {
+    name: "Battery Charging AC",
+    text1: 3
+  },
+  batteryDischarging: {
+    name: "Battery Discharging",
+    text1: 4
+  }
+};
+const COMMANDS = {
+  "0": "Off",
+  "1": "On",
+  "2": "Auto"
+};
+const COMMAND_STATES = {
+  "0": "Off",
+  "1": "On",
+  "10": "Forced Off",
+  "11": "Forced On"
+};
 const getLsConfigs = (baseId, baseName, startType, unit, amount = 3, entity = 1) => [...Array(amount)].map((_, index) => ({
   id: `${baseId}${index + 1}`,
   name: `${baseName}${index + 1}`,
@@ -157,33 +189,18 @@ const getStatesMap = () => ({
       entity: 2,
       unit: "W"
     }
+  ],
+  commands: [
+    ...Object.entries(commandOptions).map(([id, { name, text1 }]) => ({
+      id: `${id}State`,
+      name: `${name} State`,
+      type: 2465,
+      entity: text1,
+      unit: "",
+      configType: "command"
+    }))
   ]
 });
-const INVERTER_COMMANDS_TYPE = 20738;
-const INVERTER_COMMANDS_ENTITY = 0;
-const commandOptions = {
-  gridInjection: {
-    name: "Grid Injection",
-    text1: 1
-  },
-  batteryCharging: {
-    name: "Battery Charging",
-    text1: 2
-  },
-  batteryChargingAC: {
-    name: "Battery Charging AC",
-    text1: 3
-  },
-  batteryDischarging: {
-    name: "Battery Discharging",
-    text1: 4
-  }
-};
-const COMMANDS = {
-  "0": "Off",
-  "1": "On",
-  "2": "Auto"
-};
 class BatterXService {
   url;
   constructor(host) {
@@ -220,6 +237,7 @@ class BatterXService {
 0 && (module.exports = {
   BatterXService,
   COMMANDS,
+  COMMAND_STATES,
   commandOptions,
   getStatesMap
 });

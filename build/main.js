@@ -66,7 +66,7 @@ class Batterx extends utils.Adapter {
       native: {}
     });
     Object.entries((0, import_batterx.getStatesMap)()).forEach(async ([collection, configs]) => {
-      configs.forEach(async ({ id, name, unit, type, entity }) => {
+      configs.forEach(async ({ id, name, unit, type, entity, configType }) => {
         var _a;
         const val = (_a = current == null ? void 0 : current[type]) == null ? void 0 : _a[entity];
         if (val !== void 0) {
@@ -76,10 +76,11 @@ class Batterx extends utils.Adapter {
             common: {
               name,
               type: "number",
-              role: "indicator",
+              role: "state",
               read: true,
               write: false,
-              unit
+              unit,
+              ...configType ? { states: import_batterx.COMMAND_STATES } : {}
             },
             native: {}
           });

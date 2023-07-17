@@ -1,11 +1,14 @@
 import { get } from 'axios';
 
+type ConfigType = 'command';
+
 interface StateConfig {
 	id: string;
 	name: string;
 	type: number;
 	entity: number;
 	unit: string;
+	configType?: ConfigType;
 }
 
 export interface BatterXState {
@@ -86,6 +89,51 @@ export interface StateMapItem {
 
 const collections = ['upsInput'] as const;
 type Collection = (typeof collections)[number];
+
+const INVERTER_COMMANDS_TYPE = 20738;
+const INVERTER_COMMANDS_ENTITY = 0;
+
+export interface CommandConfig {
+	name: string;
+	text1: number;
+}
+
+export type CommandType = 'gridInjection' | 'batteryCharging' | 'batteryChargingAC' | 'batteryDischarging';
+
+export const commandOptions: Record<CommandType, CommandConfig> = {
+	gridInjection: {
+		name: 'Grid Injection',
+		text1: 1,
+	},
+	batteryCharging: {
+		name: 'Battery Charging',
+		text1: 2,
+	},
+	batteryChargingAC: {
+		name: 'Battery Charging AC',
+		text1: 3,
+	},
+	batteryDischarging: {
+		name: 'Battery Discharging',
+		text1: 4,
+	},
+};
+
+export type Command = '0' | '1' | '2';
+export type CommandState = '0' | '1' | '10' | '11';
+
+export const COMMANDS: Record<Command, string> = {
+	'0': 'Off',
+	'1': 'On',
+	'2': 'Auto',
+};
+
+export const COMMAND_STATES: Record<CommandState, string> = {
+	'0': 'Off',
+	'1': 'On',
+	'10': 'Forced Off',
+	'11': 'Forced On',
+};
 
 const getLsConfigs = (
 	baseId: string,
@@ -228,44 +276,17 @@ export const getStatesMap = (): Record<string, StateConfig[]> => ({
 			unit: 'W',
 		},
 	],
+	commands: [
+		...Object.entries(commandOptions).map(([id, { name, text1 }]) => ({
+			id: `${id}State`,
+			name: `${name} State`,
+			type: 2465,
+			entity: text1,
+			unit: '',
+			configType: 'command' as ConfigType,
+		})),
+	],
 });
-
-const INVERTER_COMMANDS_TYPE = 20738;
-const INVERTER_COMMANDS_ENTITY = 0;
-
-export interface CommandConfig {
-	name: string;
-	text1: number;
-}
-
-export type CommandType = 'gridInjection' | 'batteryCharging' | 'batteryChargingAC' | 'batteryDischarging';
-
-export const commandOptions: Record<CommandType, CommandConfig> = {
-	gridInjection: {
-		name: 'Grid Injection',
-		text1: 1,
-	},
-	batteryCharging: {
-		name: 'Battery Charging',
-		text1: 2,
-	},
-	batteryChargingAC: {
-		name: 'Battery Charging AC',
-		text1: 3,
-	},
-	batteryDischarging: {
-		name: 'Battery Discharging',
-		text1: 4,
-	},
-};
-
-export type Command = '0' | '1' | '2';
-
-export const COMMANDS: Record<Command, string> = {
-	'0': 'Off',
-	'1': 'On',
-	'2': 'Auto',
-};
 
 export class BatterXService {
 	private url!: string;
