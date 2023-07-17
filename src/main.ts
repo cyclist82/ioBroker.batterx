@@ -5,13 +5,22 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
-import { BatterXService, BatterXState, getStatesMap } from './lib/batterx.service';
+import {
+	BatterXService,
+	BatterXState,
+	COMMANDS,
+	Command,
+	CommandType,
+	commandOptions,
+	getStatesMap,
+} from './lib/batterx.service';
 
 // Load your modules here, e.g.:
 // import * as fs from "fs";
 
 class Batterx extends utils.Adapter {
 	private fetchInterval: NodeJS.Timer | undefined;
+	private batterXService!: BatterXService;
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
 			...options,
@@ -28,7 +37,6 @@ class Batterx extends utils.Adapter {
 	 * Is called when databases are connected and adapter received configuration.
 	 */
 	private async onReady(): Promise<void> {
-		console.log('ON READY');
 		// Initialize your adapter here
 		const { name, batterxHost } = this.config;
 		if (!name || !batterxHost) {
@@ -37,11 +45,11 @@ class Batterx extends utils.Adapter {
 		// Reset the connection indicator during startup
 		this.setState('info.connection', false, true);
 
-		const batterXService = new BatterXService(batterxHost);
-		const current = await batterXService.getCurrent();
+		this.batterXService = new BatterXService(batterxHost);
+		const current = await this.batterXService.getCurrent();
 		await this.ensureStatesExist(name, current);
 
-		this.fetchInterval = setInterval(() => this.updateCurrentStates(name, batterXService), 10000);
+		this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 10000);
 	}
 
 	/**
@@ -82,12 +90,10 @@ class Batterx extends utils.Adapter {
 	 * Is called if a subscribed state changes
 	 */
 	private onStateChange(id: string, state: ioBroker.State | null | undefined): void {
-		if (state) {
-			// The state was changed
-			this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-		} else {
-			// The state was deleted
-			this.log.info(`state ${id} deleted`);
+		if (state && !state.ack) {
+			const paths = id.split('.');
+			const type = paths[paths.length - 1] as CommandType;
+			this.batterXService.sendCommand(type, state.val as Command);
 		}
 	}
 
@@ -133,9 +139,28 @@ class Batterx extends utils.Adapter {
 						},
 						native: {},
 					});
-					await this.setState(path, { val, ack: true });
+					this.setState(path, { val, ack: true });
 				}
 			});
+		});
+		const settings = current['2465'];
+		Object.entries(commandOptions).forEach(async ([id, { name }], index) => {
+			const path = `${instanceName}.commands.${id}`;
+			await this.setObjectNotExistsAsync(path, {
+				type: 'state',
+				common: {
+					name,
+					type: 'array',
+					role: 'state',
+					read: true,
+					write: true,
+					states: COMMANDS,
+				},
+				native: {},
+			});
+			await this.subscribeStatesAsync(path);
+			const val = settings[index + 1];
+			this.setState(path, { val: this.batterXService.getCurrentSettingFromValue(val), ack: true });
 		});
 	}
 
@@ -150,8 +175,6 @@ class Batterx extends utils.Adapter {
 					// all voltages are send with 2 digits attached
 					const val = config.unit === 'V' ? value / 100 : value;
 					this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
-				} else {
-					this.log.debug(`No value for ${config.name}`);
 				}
 			});
 		});

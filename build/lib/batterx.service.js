@@ -19,6 +19,8 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var batterx_service_exports = {};
 __export(batterx_service_exports, {
   BatterXService: () => BatterXService,
+  COMMANDS: () => COMMANDS,
+  commandOptions: () => commandOptions,
   getStatesMap: () => getStatesMap
 });
 module.exports = __toCommonJS(batterx_service_exports);
@@ -157,6 +159,31 @@ const getStatesMap = () => ({
     }
   ]
 });
+const INVERTER_COMMANDS_TYPE = 20738;
+const INVERTER_COMMANDS_ENTITY = 0;
+const commandOptions = {
+  gridInjection: {
+    name: "Grid Injection",
+    text1: 1
+  },
+  batteryCharging: {
+    name: "Battery Charging",
+    text1: 2
+  },
+  batteryChargingAC: {
+    name: "Battery Charging AC",
+    text1: 3
+  },
+  batteryDischarging: {
+    name: "Battery Discharging",
+    text1: 4
+  }
+};
+const COMMANDS = {
+  "0": "Off",
+  "1": "On",
+  "2": "Auto"
+};
 class BatterXService {
   url;
   constructor(host) {
@@ -166,10 +193,34 @@ class BatterXService {
     const { data } = await (0, import_axios.get)(this.url, { params: { get: "currentstate" } });
     return data;
   }
+  async sendCommand(type, command) {
+    const text1 = Object.keys(commandOptions).indexOf(type) + 1;
+    await (0, import_axios.get)(this.url, {
+      params: {
+        set: "command",
+        type: INVERTER_COMMANDS_TYPE,
+        entity: INVERTER_COMMANDS_ENTITY,
+        text1,
+        text2: command
+      }
+    });
+  }
+  getCurrentSettingFromValue = (val) => {
+    switch (val) {
+      case 10:
+        return "0";
+      case 11:
+        return "1";
+      default:
+        return "2";
+    }
+  };
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   BatterXService,
+  COMMANDS,
+  commandOptions,
   getStatesMap
 });
 //# sourceMappingURL=batterx.service.js.map

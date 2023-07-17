@@ -230,6 +230,43 @@ export const getStatesMap = (): Record<string, StateConfig[]> => ({
 	],
 });
 
+const INVERTER_COMMANDS_TYPE = 20738;
+const INVERTER_COMMANDS_ENTITY = 0;
+
+export interface CommandConfig {
+	name: string;
+	text1: number;
+}
+
+export type CommandType = 'gridInjection' | 'batteryCharging' | 'batteryChargingAC' | 'batteryDischarging';
+
+export const commandOptions: Record<CommandType, CommandConfig> = {
+	gridInjection: {
+		name: 'Grid Injection',
+		text1: 1,
+	},
+	batteryCharging: {
+		name: 'Battery Charging',
+		text1: 2,
+	},
+	batteryChargingAC: {
+		name: 'Battery Charging AC',
+		text1: 3,
+	},
+	batteryDischarging: {
+		name: 'Battery Discharging',
+		text1: 4,
+	},
+};
+
+export type Command = '0' | '1' | '2';
+
+export const COMMANDS: Record<Command, string> = {
+	'0': 'Off',
+	'1': 'On',
+	'2': 'Auto',
+};
+
 export class BatterXService {
 	private url!: string;
 	constructor(host: string) {
@@ -240,4 +277,28 @@ export class BatterXService {
 		const { data } = await get(this.url, { params: { get: 'currentstate' } });
 		return data;
 	}
+
+	async sendCommand(type: CommandType, command: Command): Promise<void> {
+		const text1 = Object.keys(commandOptions).indexOf(type) + 1;
+		await get(this.url, {
+			params: {
+				set: 'command',
+				type: INVERTER_COMMANDS_TYPE,
+				entity: INVERTER_COMMANDS_ENTITY,
+				text1,
+				text2: command,
+			},
+		});
+	}
+
+	getCurrentSettingFromValue = (val: number): Command => {
+		switch (val) {
+			case 10:
+				return '0';
+			case 11:
+				return '1';
+			default:
+				return '2';
+		}
+	};
 }
