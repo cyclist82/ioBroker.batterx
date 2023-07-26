@@ -323,9 +323,16 @@ export class BatterXService {
 		}
 	}
 
-	async getHistory(): Promise<History | null> {
+	async getYesterdaySums(): Promise<History | null> {
+		const today = new Date();
+		const yesterday = new Date(today);
+
+		yesterday.setDate(yesterday.getDate() - 1);
+		const yesterdayDate = yesterday.toISOString().split('T')[0].replaceAll('-', '');
 		try {
-			const { data } = await get(this.url, { params: { get: 'history', from: '20230725', to: '20230725' } });
+			const { data } = await get(this.url, {
+				params: { get: 'history', from: yesterdayDate, to: yesterdayDate },
+			});
 			return data.reduce(
 				(
 					{

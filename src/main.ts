@@ -211,7 +211,7 @@ class Batterx extends utils.Adapter {
 		});
 	}
 	private async updateHistory(instanceName: string): Promise<void> {
-		const yesterday = await this.batterXService.getHistory();
+		const yesterday = await this.batterXService.getYesterdaySums();
 		if (yesterday) {
 			Object.entries(yesterday).forEach(([key, value]) => {
 				const id = `${instanceName}.yesterday.${key}`;
