@@ -288,6 +288,26 @@ export const getStatesMap = (): Record<string, StateConfig[]> => ({
 	],
 });
 
+export interface History {
+	batteryPowerFrom: number;
+	batteryPowerTo: number;
+	gridPowerTo: number;
+	gridPowerFrom: number;
+	loadPower: number;
+	housePower: number;
+	solarPower: number;
+}
+
+export const CLEAN_HISTORY = {
+	batteryPowerFrom: 0,
+	batteryPowerTo: 0,
+	gridPowerTo: 0,
+	gridPowerFrom: 0,
+	loadPower: 0,
+	housePower: 0,
+	solarPower: 0,
+};
+
 export class BatterXService {
 	private url!: string;
 	constructor(host: string) {
@@ -298,6 +318,37 @@ export class BatterXService {
 		try {
 			const { data } = await get(this.url, { params: { get: 'currentstate' } });
 			return data;
+		} catch (ex) {
+			return null;
+		}
+	}
+
+	async getHistory(): Promise<History | null> {
+		try {
+			const { data } = await get(this.url, { params: { get: 'history', from: '20230725', to: '20230725' } });
+			return data.reduce(
+				(
+					{
+						batteryPowerFrom,
+						batteryPowerTo,
+						gridPowerTo,
+						gridPowerFrom,
+						loadPower,
+						housePower,
+						solarPower,
+					}: History,
+					values: number[],
+				) => ({
+					batteryPowerFrom: batteryPowerFrom + values[5] / 12,
+					batteryPowerTo: batteryPowerTo + values[6] / 12,
+					gridPowerFrom: gridPowerFrom + values[9] / 12,
+					gridPowerTo: gridPowerTo + values[10] / 12,
+					loadPower: loadPower + values[11] / 12,
+					housePower: housePower + values[12] / 12,
+					solarPower: solarPower + values[13] / 12,
+				}),
+				CLEAN_HISTORY,
+			);
 		} catch (ex) {
 			return null;
 		}

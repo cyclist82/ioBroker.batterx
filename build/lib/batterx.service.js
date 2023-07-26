@@ -19,6 +19,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var batterx_service_exports = {};
 __export(batterx_service_exports, {
   BatterXService: () => BatterXService,
+  CLEAN_HISTORY: () => CLEAN_HISTORY,
   COMMANDS: () => COMMANDS,
   COMMAND_STATES: () => COMMAND_STATES,
   commandOptions: () => commandOptions,
@@ -201,6 +202,15 @@ const getStatesMap = () => ({
     }))
   ]
 });
+const CLEAN_HISTORY = {
+  batteryPowerFrom: 0,
+  batteryPowerTo: 0,
+  gridPowerTo: 0,
+  gridPowerFrom: 0,
+  loadPower: 0,
+  housePower: 0,
+  solarPower: 0
+};
 class BatterXService {
   url;
   constructor(host) {
@@ -210,6 +220,33 @@ class BatterXService {
     try {
       const { data } = await (0, import_axios.get)(this.url, { params: { get: "currentstate" } });
       return data;
+    } catch (ex) {
+      return null;
+    }
+  }
+  async getHistory() {
+    try {
+      const { data } = await (0, import_axios.get)(this.url, { params: { get: "history", from: "20230725", to: "20230725" } });
+      return data.reduce(
+        ({
+          batteryPowerFrom,
+          batteryPowerTo,
+          gridPowerTo,
+          gridPowerFrom,
+          loadPower,
+          housePower,
+          solarPower
+        }, values) => ({
+          batteryPowerFrom: batteryPowerFrom + values[5] / 12,
+          batteryPowerTo: batteryPowerTo + values[6] / 12,
+          gridPowerFrom: gridPowerFrom + values[9] / 12,
+          gridPowerTo: gridPowerTo + values[10] / 12,
+          loadPower: loadPower + values[11] / 12,
+          housePower: housePower + values[12] / 12,
+          solarPower: solarPower + values[13] / 12
+        }),
+        CLEAN_HISTORY
+      );
     } catch (ex) {
       return null;
     }
@@ -240,6 +277,7 @@ class BatterXService {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   BatterXService,
+  CLEAN_HISTORY,
   COMMANDS,
   COMMAND_STATES,
   commandOptions,

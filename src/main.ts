@@ -5,9 +5,11 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
+import { CronJob } from 'cron';
 import {
 	BatterXService,
 	BatterXState,
+	CLEAN_HISTORY,
 	COMMANDS,
 	COMMAND_STATES,
 	Command,
@@ -51,7 +53,14 @@ class Batterx extends utils.Adapter {
 		if (!!current) {
 			await this.ensureStatesExist(name, current);
 
-			this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 10000);
+			this.fetchInterval = setInterval(() => this.updateCurrentStates(name), 10000);
+
+			new CronJob({
+				cronTime: '0 1 * * *',
+				onTick: async () => await this.updateHistory(name),
+				start: true,
+				runOnInit: true,
+			});
 		}
 	}
 
@@ -123,6 +132,24 @@ class Batterx extends utils.Adapter {
 			common: { name: 'name of the batterX device' },
 			native: {},
 		});
+		Object.keys(CLEAN_HISTORY).forEach(async (key) => {
+			const id = `${instanceName}.yesterday.${key}`;
+			const name = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+
+			await this.setObjectNotExistsAsync(id, {
+				type: 'state',
+				common: {
+					name,
+					type: 'number',
+					role: 'state',
+					read: true,
+					write: false,
+					unit: 'kwH',
+				},
+				native: {},
+			});
+			this.setState(id, { val: 0, ack: true });
+		});
 		Object.entries(getStatesMap()).forEach(async ([collection, configs]) => {
 			configs.forEach(async ({ id, name, unit, type, entity, configType }) => {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -168,8 +195,8 @@ class Batterx extends utils.Adapter {
 		});
 	}
 
-	private async updateCurrentStates(instanceName: string, batterXService: BatterXService): Promise<void> {
-		const current = await batterXService.getCurrent();
+	private async updateCurrentStates(instanceName: string): Promise<void> {
+		const current = await this.batterXService.getCurrent();
 		Object.entries(getStatesMap()).forEach(([collection, configs]) => {
 			configs.forEach((config) => {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -182,6 +209,15 @@ class Batterx extends utils.Adapter {
 				}
 			});
 		});
+	}
+	private async updateHistory(instanceName: string): Promise<void> {
+		const yesterday = await this.batterXService.getHistory();
+		if (yesterday) {
+			Object.entries(yesterday).forEach(([key, value]) => {
+				const id = `${instanceName}.yesterday.${key}`;
+				this.setState(id, { val: Math.round(value), ack: true });
+			});
+		}
 	}
 }
 

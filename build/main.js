@@ -18,6 +18,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var utils = __toESM(require("@iobroker/adapter-core"));
+var import_cron = require("cron");
 var import_batterx = require("./lib/batterx.service");
 class Batterx extends utils.Adapter {
   fetchInterval;
@@ -41,7 +42,13 @@ class Batterx extends utils.Adapter {
     this.setState("info.connection", !!current, true);
     if (!!current) {
       await this.ensureStatesExist(name, current);
-      this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 1e4);
+      this.fetchInterval = setInterval(() => this.updateCurrentStates(name), 1e4);
+      new import_cron.CronJob({
+        cronTime: "0 1 * * *",
+        onTick: async () => await this.updateHistory(name),
+        start: true,
+        runOnInit: true
+      });
     }
   }
   onUnload(callback) {
@@ -66,6 +73,23 @@ class Batterx extends utils.Adapter {
       type: "folder",
       common: { name: "name of the batterX device" },
       native: {}
+    });
+    Object.keys(import_batterx.CLEAN_HISTORY).forEach(async (key) => {
+      const id = `${instanceName}.yesterday.${key}`;
+      const name = key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+      await this.setObjectNotExistsAsync(id, {
+        type: "state",
+        common: {
+          name,
+          type: "number",
+          role: "state",
+          read: true,
+          write: false,
+          unit: "kwH"
+        },
+        native: {}
+      });
+      this.setState(id, { val: 0, ack: true });
     });
     Object.entries((0, import_batterx.getStatesMap)()).forEach(async ([collection, configs]) => {
       configs.forEach(async ({ id, name, unit, type, entity, configType }) => {
@@ -110,8 +134,8 @@ class Batterx extends utils.Adapter {
       this.setState(path, { val: this.batterXService.getCurrentSettingFromValue(val), ack: true });
     });
   }
-  async updateCurrentStates(instanceName, batterXService) {
-    const current = await batterXService.getCurrent();
+  async updateCurrentStates(instanceName) {
+    const current = await this.batterXService.getCurrent();
     Object.entries((0, import_batterx.getStatesMap)()).forEach(([collection, configs]) => {
       configs.forEach((config) => {
         var _a;
@@ -122,6 +146,15 @@ class Batterx extends utils.Adapter {
         }
       });
     });
+  }
+  async updateHistory(instanceName) {
+    const yesterday = await this.batterXService.getHistory();
+    if (yesterday) {
+      Object.entries(yesterday).forEach(([key, value]) => {
+        const id = `${instanceName}.yesterday.${key}`;
+        this.setState(id, { val: Math.round(value), ack: true });
+      });
+    }
   }
 }
 if (require.main !== module) {
