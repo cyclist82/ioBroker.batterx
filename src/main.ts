@@ -43,14 +43,16 @@ class Batterx extends utils.Adapter {
 		if (!name || !batterxHost) {
 			return;
 		}
-		// Reset the connection indicator during startup
-		this.setState('info.connection', false, true);
-
 		this.batterXService = new BatterXService(batterxHost);
+		// Reset the connection indicator during startup
 		const current = await this.batterXService.getCurrent();
-		await this.ensureStatesExist(name, current);
 
-		this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 10000);
+		this.setState('info.connection', !!current, true);
+		if (!!current) {
+			await this.ensureStatesExist(name, current);
+
+			this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 10000);
+		}
 	}
 
 	/**

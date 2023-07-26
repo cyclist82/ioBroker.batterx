@@ -36,11 +36,13 @@ class Batterx extends utils.Adapter {
     if (!name || !batterxHost) {
       return;
     }
-    this.setState("info.connection", false, true);
     this.batterXService = new import_batterx.BatterXService(batterxHost);
     const current = await this.batterXService.getCurrent();
-    await this.ensureStatesExist(name, current);
-    this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 1e4);
+    this.setState("info.connection", !!current, true);
+    if (!!current) {
+      await this.ensureStatesExist(name, current);
+      this.fetchInterval = setInterval(() => this.updateCurrentStates(name, this.batterXService), 1e4);
+    }
   }
   onUnload(callback) {
     try {

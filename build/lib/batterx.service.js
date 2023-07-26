@@ -207,8 +207,12 @@ class BatterXService {
     this.url = `http://${host}/api.php`;
   }
   async getCurrent() {
-    const { data } = await (0, import_axios.get)(this.url, { params: { get: "currentstate" } });
-    return data;
+    try {
+      const { data } = await (0, import_axios.get)(this.url, { params: { get: "currentstate" } });
+      return data;
+    } catch (ex) {
+      return null;
+    }
   }
   async sendCommand(type, command) {
     const text1 = Object.keys(commandOptions).indexOf(type) + 1;

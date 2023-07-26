@@ -294,9 +294,13 @@ export class BatterXService {
 		this.url = `http://${host}/api.php`;
 	}
 
-	async getCurrent(): Promise<BatterXState> {
-		const { data } = await get(this.url, { params: { get: 'currentstate' } });
-		return data;
+	async getCurrent(): Promise<BatterXState | null> {
+		try {
+			const { data } = await get(this.url, { params: { get: 'currentstate' } });
+			return data;
+		} catch (ex) {
+			return null;
+		}
 	}
 
 	async sendCommand(type: CommandType, command: Command): Promise<void> {
