@@ -46,8 +46,7 @@ class Batterx extends utils.Adapter {
       new import_cron.CronJob({
         cronTime: "0 1 * * *",
         onTick: async () => await this.updateHistory(name),
-        start: true,
-        runOnInit: true
+        start: true
       });
     }
   }
