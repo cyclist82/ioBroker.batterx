@@ -59,7 +59,6 @@ class Batterx extends utils.Adapter {
 				cronTime: '0 1 * * *',
 				onTick: async () => await this.updateHistory(name),
 				start: true,
-				runOnInit: true,
 			});
 		}
 	}
@@ -210,6 +209,7 @@ class Batterx extends utils.Adapter {
 			});
 		});
 	}
+
 	private async updateHistory(instanceName: string): Promise<void> {
 		const yesterday = await this.batterXService.getYesterdaySums();
 		if (yesterday) {
