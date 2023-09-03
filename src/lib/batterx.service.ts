@@ -233,6 +233,13 @@ export const getStatesMap = (): Record<string, StateConfig[]> => ({
 			entity: 1,
 			unit: '%',
 		},
+		{
+			id: 'powerTotal',
+			name: 'Power Total',
+			type: 1121,
+			entity: 1,
+			unit: 'W',
+		},
 	],
 	solar: [
 		...getLsConfigs('voltageX', 'Voltage X', 1553, 'V', 2, 1),
