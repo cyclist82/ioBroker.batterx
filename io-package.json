@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "batterx",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "news": {
+      "0.0.3": {
+        "en": "Addition of battery power",
+        "de": "Zusatz von Batterieleistung",
+        "ru": "Добавление мощности батареи",
+        "pt": "Adição de energia da bateria",
+        "nl": "Additie van batterijen",
+        "fr": "Ajout de la puissance de la batterie",
+        "it": "Aggiunta di potenza della batteria",
+        "es": "Adición de energía de la batería",
+        "pl": "Dostęp do zasilania baterii",
+        "uk": "Додавання живлення батареї",
+        "zh-cn": "增加电池力"
+      },
       "0.0.2": {
         "en": "initial release",
         "de": "erstausstrahlung",

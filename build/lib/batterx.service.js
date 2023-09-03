@@ -147,6 +147,13 @@ const getStatesMap = () => ({
       type: 1074,
       entity: 1,
       unit: "%"
+    },
+    {
+      id: "powerTotal",
+      name: "Power Total",
+      type: 1121,
+      entity: 1,
+      unit: "W"
     }
   ],
   solar: [
