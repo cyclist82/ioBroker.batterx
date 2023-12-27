@@ -201,7 +201,7 @@ class Batterx extends utils.Adapter {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				const value = current?.[config.type]?.[config.entity];
-				if (value) {
+				if (value === undefined || value === null) {
 					// all voltages are send with 2 digits attached
 					const val = config.unit === 'V' ? value / 100 : value;
 					this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
