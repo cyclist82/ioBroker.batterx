@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "batterx",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "news": {
+      "0.0.4": {
+        "en": "Allow 0 values",
+        "de": "0 Werte zulassen",
+        "ru": "Разрешить 0 значения",
+        "pt": "Permitir 0 valores",
+        "nl": "Vertaling:",
+        "fr": "Permettre 0 valeurs",
+        "it": "Consentire 0 valori",
+        "es": "Permitir 0 valores",
+        "pl": "Allow 0",
+        "uk": "Allow 0 значення",
+        "zh-cn": "补贴"
+      },
       "0.0.3": {
         "en": "Addition of battery power",
         "de": "Zusatz von Batterieleistung",

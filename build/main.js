@@ -139,7 +139,7 @@ class Batterx extends utils.Adapter {
       configs.forEach((config) => {
         var _a;
         const value = (_a = current == null ? void 0 : current[config.type]) == null ? void 0 : _a[config.entity];
-        if (value) {
+        if (value === void 0 || value === null) {
           const val = config.unit === "V" ? value / 100 : value;
           this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
         }
