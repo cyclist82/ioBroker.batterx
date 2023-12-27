@@ -100,9 +100,13 @@ Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev
 
 ## Changelog
 <!--
-	Placeholder for the next version (at the beginning of the line):
-	### **WORK IN PROGRESS**
+  Placeholder for the next version (at the beginning of the line):
+  ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+-   Allow 0 values
+
 ### 0.0.3 (2023-09-03)
 -   Addition of battery power
 
