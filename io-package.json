@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "batterx",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "news": {
+      "0.0.5": {
+        "en": "Allow 0 values",
+        "de": "0 Werte zulassen",
+        "ru": "Разрешить 0 значений",
+        "pt": "Permitir 0 valores",
+        "nl": "0 waarden toestaan",
+        "fr": "Laisser 0 valeurs",
+        "it": "Consentire 0 valori",
+        "es": "Permitir 0 valores",
+        "pl": "Dopuść wartości 0",
+        "uk": "Allow 0 значення",
+        "zh-cn": "允许 0 值"
+      },
       "0.0.4": {
         "en": "Allow 0 values",
         "de": "0 Werte zulassen",
