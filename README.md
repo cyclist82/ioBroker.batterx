@@ -103,6 +103,11 @@ Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev
   Placeholder for the next version (at the beginning of the line):
   ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+-   Allow 0 values
+
+
 ### 0.0.4 (2023-12-27)
 -   Allow 0 values
 
@@ -115,7 +120,7 @@ Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev
 ## License
 MIT License
 
-Copyright (c) 2023 cyclist82 <leiflampater@gmail.com>
+Copyright (c) 2024 cyclist82 <leiflampater@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

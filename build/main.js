@@ -94,23 +94,21 @@ class Batterx extends utils.Adapter {
       configs.forEach(async ({ id, name, unit, type, entity, configType }) => {
         var _a;
         const val = (_a = current == null ? void 0 : current[type]) == null ? void 0 : _a[entity];
-        if (val !== void 0) {
-          const path = `${instanceName}.${collection}.${id}`;
-          await this.setObjectNotExistsAsync(path, {
-            type: "state",
-            common: {
-              name,
-              type: "number",
-              role: "state",
-              read: true,
-              write: false,
-              unit,
-              ...configType ? { states: import_batterx.COMMAND_STATES } : {}
-            },
-            native: {}
-          });
-          this.setState(path, { val, ack: true });
-        }
+        const path = `${instanceName}.${collection}.${id}`;
+        await this.setObjectNotExistsAsync(path, {
+          type: "state",
+          common: {
+            name,
+            type: "number",
+            role: "state",
+            read: true,
+            write: false,
+            unit,
+            ...configType ? { states: import_batterx.COMMAND_STATES } : {}
+          },
+          native: {}
+        });
+        this.setState(path, { val: val || 0, ack: true });
       });
     });
     const settings = current["2465"];
@@ -139,7 +137,7 @@ class Batterx extends utils.Adapter {
       configs.forEach((config) => {
         var _a;
         const value = (_a = current == null ? void 0 : current[config.type]) == null ? void 0 : _a[config.entity];
-        if (value === void 0 || value === null) {
+        if (!(value === void 0 || value === null)) {
           const val = config.unit === "V" ? value / 100 : value;
           this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
         }
