@@ -154,23 +154,21 @@ class Batterx extends utils.Adapter {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				const val = current?.[type]?.[entity];
-				if (val !== undefined) {
-					const path = `${instanceName}.${collection}.${id}`;
-					await this.setObjectNotExistsAsync(path, {
-						type: 'state',
-						common: {
-							name,
-							type: 'number',
-							role: 'state',
-							read: true,
-							write: false,
-							unit,
-							...(configType ? { states: COMMAND_STATES } : {}),
-						},
-						native: {},
-					});
-					this.setState(path, { val, ack: true });
-				}
+				const path = `${instanceName}.${collection}.${id}`;
+				await this.setObjectNotExistsAsync(path, {
+					type: 'state',
+					common: {
+						name,
+						type: 'number',
+						role: 'state',
+						read: true,
+						write: false,
+						unit,
+						...(configType ? { states: COMMAND_STATES } : {}),
+					},
+					native: {},
+				});
+				this.setState(path, { val: val || 0, ack: true });
 			});
 		});
 		const settings = current['2465'];
@@ -201,7 +199,7 @@ class Batterx extends utils.Adapter {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				const value = current?.[config.type]?.[config.entity];
-				if (value === undefined || value === null) {
+				if (!(value === undefined || value === null)) {
 					// all voltages are send with 2 digits attached
 					const val = config.unit === 'V' ? value / 100 : value;
 					this.setState(`${instanceName}.${collection}.${config.id}`, { val, ack: true });
